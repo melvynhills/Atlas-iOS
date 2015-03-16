@@ -169,6 +169,16 @@
 @property (nonatomic, assign) BOOL allowsEditing;
 
 /**
+ @abstract IA boolean value to determine whether or not the receiver should display an Edit button made available with `allowsEditing`. Default is yes.
+  */
+@property (nonatomic, assign) BOOL displaysEditButton;
+
+/**
+ @abstract IA boolean value to determine whether or not the receiver should display a `UISearchBar` at the top of the list. Default is yes.
+ */
+@property (nonatomic) BOOL displaysSearchBar;
+
+/**
  @abstract Sets the height for cells within the receiver.
  @default `76.0`
  @raises NSInternalInconsistencyException Raised if the value is mutated after the receiver has been presented.

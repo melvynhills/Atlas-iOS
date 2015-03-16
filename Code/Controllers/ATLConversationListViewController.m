@@ -72,6 +72,8 @@ NSString *const ATLConversationTableViewAccessibilityIdentifier = @"Conversation
     _deletionModes = @[@(LYRDeletionModeLocal), @(LYRDeletionModeAllParticipants)];
     _displaysAvatarItem = NO;
     _allowsEditing = YES;
+    _displaysEditButton = YES;
+    _displaysSearchBar = YES;
     _rowHeight = 76.0f;
 }
 
@@ -108,17 +110,19 @@ NSString *const ATLConversationTableViewAccessibilityIdentifier = @"Conversation
     self.tableView.accessibilityIdentifier = ATLConversationTableViewAccessibilityIdentifier;
     self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
     
-    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
-    [self.searchBar sizeToFit];
-    self.searchBar.translucent = NO;
-    self.searchBar.accessibilityLabel = @"Search Bar";
-    self.searchBar.delegate = self;
-    self.tableView.tableHeaderView = self.searchBar;
-    
-    self.searchController = [[UISearchDisplayController alloc] initWithSearchBar:self.searchBar contentsController:self];
-    self.searchController.delegate = self;
-    self.searchController.searchResultsDelegate = self;
-    self.searchController.searchResultsDataSource = self;
+    if (self.displaysSearchBar) {
+        self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectZero];
+        [self.searchBar sizeToFit];
+        self.searchBar.translucent = NO;
+        self.searchBar.accessibilityLabel = @"Search Bar";
+        self.searchBar.delegate = self;
+        self.tableView.tableHeaderView = self.searchBar;
+        
+        self.searchController = [[UISearchDisplayController alloc] initWithSearchBar:self.searchBar contentsController:self];
+        self.searchController.delegate = self;
+        self.searchController.searchResultsDelegate = self;
+        self.searchController.searchResultsDataSource = self;
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -131,7 +135,7 @@ NSString *const ATLConversationTableViewAccessibilityIdentifier = @"Conversation
         self.tableView.contentOffset = CGPointMake(0, contentOffset);
         self.tableView.rowHeight = self.rowHeight;
         [self.tableView registerClass:self.cellClass forCellReuseIdentifier:ATLConversationCellReuseIdentifier];
-        if (self.allowsEditing) [self addEditButton];
+        if (self.allowsEditing && self.displaysEditButton) [self addEditButton];
     }
     if (!self.queryController) {
         [self setupConversationDataSource];
@@ -183,12 +187,30 @@ NSString *const ATLConversationTableViewAccessibilityIdentifier = @"Conversation
     _displaysAvatarItem = displaysAvatarItem;
 }
 
+- (void)setDisplaysSearchBar:(BOOL)displaysSearchBar
+{
+    if (self.hasAppeared) {
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Cannot change conversation search bar display after the view has been presented" userInfo:nil];
+    }
+    _displaysSearchBar = displaysSearchBar;
+}
+
 - (void)setAllowsEditing:(BOOL)allowsEditing
 {
     if (self.hasAppeared) {
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Cannot change editing mode after the view has been presented" userInfo:nil];
     }
     _allowsEditing = allowsEditing;
+}
+
+- (void)setDisplaysEditButton:(BOOL)displaysEditButton
+{
+    _displaysEditButton = displaysEditButton;
+    if (_displaysEditButton) {
+        [self addEditButton];
+    } else {
+        [self removeEditButton];
+    }
 }
 
 - (void)setRowHeight:(CGFloat)rowHeight
@@ -206,6 +228,11 @@ NSString *const ATLConversationTableViewAccessibilityIdentifier = @"Conversation
     if (self.navigationItem.leftBarButtonItem) return;
     self.editButtonItem.accessibilityLabel = @"Edit Button";
     self.navigationItem.leftBarButtonItem = self.editButtonItem;
+}
+
+- (void)removeEditButton
+{
+    self.navigationItem.leftBarButtonItem = nil;
 }
 
 - (void)setupConversationDataSource
