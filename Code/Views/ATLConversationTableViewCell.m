@@ -318,10 +318,10 @@ NSString *const ATLLocationMIMETypePlaceholderText = @"Attachment: Location";
     if (!lastMessage) return @"";
     if (!lastMessage.sentAt) return @"";
     
-    if (ATLIsDateInToday(lastMessage.receivedAt)) {
-        return [ATLShortTimeFormatter() stringFromDate:lastMessage.receivedAt];
+    if (ATLIsDateInToday(lastMessage.sentAt)) {
+        return [ATLShortTimeFormatter() stringFromDate:lastMessage.sentAt];
     } else {
-        return [ATLRelativeDateFormatter() stringFromDate:lastMessage.receivedAt];
+        return [ATLRelativeDateFormatter() stringFromDate:lastMessage.sentAt];
     }
 }
 
