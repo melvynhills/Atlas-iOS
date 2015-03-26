@@ -134,6 +134,8 @@ static CGFloat const ATLMaxScrollDistanceFromBottom = 150;
     BOOL isPopping = ![self.navigationController.viewControllers containsObject:self];
     if (isPopping) {
         [self.messageInputToolbar.textInputView resignFirstResponder];
+    } else {
+        [self.view resignFirstResponder];
     }
 }
 
