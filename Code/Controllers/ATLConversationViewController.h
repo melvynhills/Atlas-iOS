@@ -149,7 +149,7 @@
  a Layer conversation and the ability to send messages. The controller's design and functionality closely correlates with
  the conversation view controller in Messages.
 */
-@interface ATLConversationViewController : ATLBaseConversationViewController <ATLAddressBarViewControllerDelegate>
+@interface ATLConversationViewController : ATLBaseConversationViewController <ATLAddressBarViewControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate>
 
 ///---------------------------------------
 /// @name Initializing a Controller
@@ -192,13 +192,17 @@
 - (void)registerClass:(Class<ATLMessagePresenting>)cellClass forMessageCellWithReuseIdentifier:(NSString *)reuseIdentifier;
 
 /**
- @abstract Returns the `UICollectionViewCell` corresponding to the provided `LYRMessage` object.
- @param message The LYRMessage object used to acquire the cell.
- @return A `UICollectionViewCell` object conforming to the `ATLMessagePresenting` protocol.
- @discussion If the provided `LYRMessage` object is not in the current results set of the controller, or the corresponding cell is
- not currently visible, the method may return nil.
+ @abstract Reloads the cell for the given Message.
+ @param message The Message object to reload the corresponding cell of. Cannot be `nil`.
  */
-- (UICollectionViewCell<ATLMessagePresenting> *)collectionViewCellForMessage:(LYRMessage *)message;
+- (void)reloadCellForMessage:(LYRMessage *)message;
+
+/**
+ @abstract Reloads the cells for all messages sent by the participant with the given identifier.
+ @discussion This method is useful after the completion of asynchronous user resolution activities.
+ @param participantIdentifier The identifier of the participant whose messages are to be reloaded.
+ */
+- (void)reloadCellsForMessagesSentByParticipantWithIdentitifier:(NSString *)participantIdentifier;
 
 /**
  @abstract Informs the reciever that it should send a message with the current location of the device.
@@ -206,9 +210,9 @@
  */
 - (void)sendLocationMessage;
 
-///---------------------------------------
-/// @name Configuration
-///---------------------------------------
+///---------------------------
+/// @name Configuring Behavior
+///---------------------------
 
 /**
  @abstract The time interval at which message dates should be displayed in seconds. Default is 60 minutes meaning that
@@ -217,7 +221,7 @@
 @property (nonatomic) NSTimeInterval dateDisplayTimeInterval;
 
 /**
-@abstract A Boolean value that determines whether or not the controller marks all messages as read.
+ @abstract A Boolean value that determines whether or not the controller marks all messages as read.
  @discussion If `YES`, the controller will mark all messages in the conversation as read when it is presented.
  @default `YES`.
  */

@@ -30,7 +30,7 @@
 #import "ATLMediaAttachment.h"
 #import "ATLLocationManager.h"
 
-@interface ATLConversationViewController () <UICollectionViewDataSource, UICollectionViewDelegate, ATLMessageInputToolbarDelegate, UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, LYRQueryControllerDelegate, CLLocationManagerDelegate>
+@interface ATLConversationViewController () <UICollectionViewDataSource, UICollectionViewDelegate, ATLMessageInputToolbarDelegate, UIActionSheetDelegate, LYRQueryControllerDelegate, CLLocationManagerDelegate>
 
 @property (nonatomic) ATLConversationDataSource *conversationDataSource;
 @property (nonatomic) BOOL shouldDisplayAvatarItem;
@@ -121,7 +121,6 @@ static NSString *const ATLPushNotificationSoundName = @"layerbell.caf";
         [self fetchLayerMessages];
     }
     [self configureControllerForConversation];
-    
     self.messageInputToolbar.inputToolBarDelegate = self;
     self.addressBarController.delegate = self;
     self.canDisableAddressBar = YES;
@@ -135,6 +134,7 @@ static NSString *const ATLPushNotificationSoundName = @"layerbell.caf";
         [self.addressBarController disable];
         [self configureAddressBarForConversation];
     }
+    
     self.canDisableAddressBar = YES;
     if (!self.hasAppeared) {
         [self.collectionView layoutIfNeeded];
@@ -701,12 +701,12 @@ static NSString *const ATLPushNotificationSoundName = @"layerbell.caf";
     
     NSArray *changes = notification.userInfo[LYRClientObjectChangesUserInfoKey];
     for (NSDictionary *change in changes) {
+        
         id changedObject = change[LYRObjectChangeObjectKey];
         if (![changedObject isEqual:self.conversation]) continue;
         
         LYRObjectChangeType changeType = [change[LYRObjectChangeTypeKey] integerValue];
         NSString *changedProperty = change[LYRObjectChangePropertyKey];
-        
         if (changeType == LYRObjectChangeTypeUpdate && [changedProperty isEqualToString:@"participants"]) {
             [self configureControllerForChangedParticipants];
             break;
@@ -886,15 +886,43 @@ static NSString *const ATLPushNotificationSoundName = @"layerbell.caf";
     [self.collectionView registerClass:cellClass forCellWithReuseIdentifier:reuseIdentifier];
 }
 
-- (UICollectionViewCell<ATLMessagePresenting> *)collectionViewCellForMessage:(LYRMessage *)message
+- (void)reloadCellForMessage:(LYRMessage *)message
 {
     NSIndexPath *indexPath = [self.conversationDataSource.queryController indexPathForObject:message];
     if (indexPath) {
         NSIndexPath *collectionViewIndexPath = [self.conversationDataSource collectionViewIndexPathForQueryControllerIndexPath:indexPath];
-        UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:collectionViewIndexPath];
-        if (cell) return (UICollectionViewCell<ATLMessagePresenting> *)cell;
+        if (collectionViewIndexPath) {
+            [self.collectionView reloadItemsAtIndexPaths:@[ collectionViewIndexPath ]];
+        }
     }
-    return nil;
+}
+
+- (void)reloadCellsForMessagesSentByParticipantWithIdentitifier:(NSString *)participantIdentifier
+{
+    // Query for the All the Messages in the set of identifiers we have where sent by user == participantIdentifier
+    LYRQuery *messageIdentifiersQuery = [self.conversationDataSource.queryController.query copy];
+    messageIdentifiersQuery.resultType = LYRQueryResultTypeIdentifiers;
+    NSError *error = nil;
+    NSOrderedSet *messageIdentifiers = [self.layerClient executeQuery:messageIdentifiersQuery error:&error];
+    if (!messageIdentifiers) {
+        NSLog(@"LayerKit failed to execute query with error: %@", error);
+        return;
+    }
+    
+    LYRQuery *query = [LYRQuery queryWithClass:[LYRMessage class]];
+    LYRPredicate *senderPredicate = [LYRPredicate predicateWithProperty:@"sentByUserID" operator:LYRPredicateOperatorIsEqualTo value:participantIdentifier];
+    LYRPredicate *objectIdentifiersPredicate = [LYRPredicate predicateWithProperty:@"identifier" operator:LYRPredicateOperatorIsIn value:messageIdentifiers];
+    query.predicate = [LYRCompoundPredicate compoundPredicateWithType:LYRCompoundPredicateTypeAnd subpredicates:@[ senderPredicate, objectIdentifiersPredicate ]];
+    query.resultType = LYRQueryResultTypeIdentifiers;
+    NSOrderedSet *messageIdentifiersToReload = [self.layerClient executeQuery:query error:&error];
+    if (!messageIdentifiers) {
+        NSLog(@"LayerKit failed to execute query with error: %@", error);
+        return;
+    }
+
+    NSDictionary *objectIdentifiersToIndexPaths = [self.conversationDataSource.queryController indexPathsForObjectsWithIdentifiers:messageIdentifiersToReload.set];
+    NSArray *indexPaths = [objectIdentifiersToIndexPaths allValues];
+    [self.collectionView reloadItemsAtIndexPaths:indexPaths];
 }
 
 #pragma mark - Delegate

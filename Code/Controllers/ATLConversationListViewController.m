@@ -29,7 +29,7 @@ static NSString *const ATLConversationCellReuseIdentifier = @"ATLConversationCel
 @property (nonatomic) LYRQueryController *searchQueryController;
 @property (nonatomic) LYRConversation *conversationToDelete;
 @property (nonatomic) LYRConversation *conversationSelectedBeforeContentChange;
-@property (nonatomic) UISearchDisplayController *searchController;
+@property (nonatomic, readwrite) UISearchDisplayController *searchController;
 @property (nonatomic) UISearchBar *searchBar;
 @property (nonatomic) BOOL hasAppeared;
 
@@ -245,7 +245,9 @@ NSString *const ATLConversationTableViewAccessibilityIdentifier = @"Conversation
     self.queryController.delegate = self;
     NSError *error;
     BOOL success = [self.queryController execute:&error];
-    if (!success) NSLog(@"LayerKit failed to execute query with error: %@", error);
+    if (!success) {
+        NSLog(@"LayerKit failed to execute query with error: %@", error);
+    }
     [self.tableView reloadData];
 }
 
@@ -289,6 +291,19 @@ NSString *const ATLConversationTableViewAccessibilityIdentifier = @"Conversation
         [conversationCell updateWithConversationTitle:conversationTitle];
     } else {
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Conversation View Delegate must return a conversation label" userInfo:nil];
+    }
+}
+
+#pragma mark - Reloading Conversations
+
+- (void)reloadCellForConversation:(LYRConversation *)conversation
+{
+    if (!conversation) {
+        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"`conversation` cannot be nil." userInfo:nil];
+    }
+    NSIndexPath *indexPath = [self.queryController indexPathForObject:conversation];
+    if (indexPath) {
+        [self.tableView reloadRowsAtIndexPaths:@[ indexPath ] withRowAnimation:UITableViewRowAnimationAutomatic];
     }
 }
 

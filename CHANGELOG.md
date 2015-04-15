@@ -1,7 +1,38 @@
 # Atlas Changelog
 
-## 1.0.2
+## 1.0.5
+
 ### Public API Changes
+
+* Added `avatarImageURL` property to `ATLAvatarItem`. 
+
+### Enhancements
+* Added logic to fetch image from a URL to `ATLAvatarImageView`. 
+* Added image cache to `ATLAvatarImageView`. 
+
+## 1.0.4
+
+### Public API Changes
+
+* Moved `searchController` property to public API on `ATLConversationListViewController`. 
+* Moved `UIImagePickerControllerDelegate` and `UINavigationControllerDelegate` declarations to header of `ATLConversationViewController`.
+* Added `leftAccessoryImage`, `rightAccessoryImage` and `displaysRightAccessoryImage` to `ATLMessageInputToolbar`. 
+
+## 1.0.3
+
+### Enhancements
+
+* Introduced new functionality to facilitate reloading content after asynchronous reloads of user information.
+
+### Public API Changes
+
+* Added `reloadCellsForMessagesSentByParticipantWithIdentitifier:` to `ATLConversationViewController`.
+* Removed `collectionViewCellForMessage:` from `ATLConversationViewController`.
+
+## 1.0.2
+
+### Public API Changes
+
 * Added `conversationListViewController:textForButtonWithDeletionMode:` to `ATLConversationListViewController`
 * Added `conversationListViewController:colorForButtonWithDeletionMode:` to `ATLConversationListViewController`
  		
